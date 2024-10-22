@@ -1,6 +1,6 @@
-package com.plcoding.cryptotracker.util
+package com.phamnhantucode.cryptotracker.core.presentation.util
 
-import com.plcoding.cryptotracker.R
+import com.phamnhantucode.cryptotracker.R
 
 fun getDrawableIdForCoin(symbol: String): Int {
     return when (symbol.uppercase()) {
