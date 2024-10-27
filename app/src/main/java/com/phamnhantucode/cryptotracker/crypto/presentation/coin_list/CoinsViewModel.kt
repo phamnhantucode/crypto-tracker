@@ -5,16 +5,20 @@ import androidx.lifecycle.viewModelScope
 import com.phamnhantucode.cryptotracker.core.domain.util.onError
 import com.phamnhantucode.cryptotracker.core.domain.util.onSuccess
 import com.phamnhantucode.cryptotracker.crypto.domain.CoinDataSource
+import com.phamnhantucode.cryptotracker.crypto.presentation.models.CoinUI
 import com.phamnhantucode.cryptotracker.crypto.presentation.models.toCoinUI
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.ZonedDateTime
 
 class CoinsViewModel(
-    val dataSource: CoinDataSource
+    private val dataSource: CoinDataSource
 ) : ViewModel() {
     private val _state = MutableStateFlow(CoinListState())
     val state = _state
@@ -27,6 +31,36 @@ class CoinsViewModel(
             CoinListState()
         )
 
+    private val _event = Channel<CoinListEvent>()
+    val event = _event.receiveAsFlow()
+
+    fun onAction(action: CoinListAction) {
+        viewModelScope.launch {
+            when (action) {
+                is CoinListAction.ClickCoin -> {
+                    selectedCoin(action.coin)
+                }
+            }
+        }
+    }
+
+    private fun selectedCoin(coin: CoinUI) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(selectedCoin = coin)
+            }
+            dataSource.getCoinPrice(
+                coinId = coin.id,
+                start = ZonedDateTime.now().minusDays(7),
+                end = ZonedDateTime.now(),
+            ).onSuccess {
+                print(it)
+            }.onError { error ->
+                _event.send(CoinListEvent.Error(error))
+            }
+        }
+    }
+
     private fun loadCoins() {
         viewModelScope.launch {
             dataSource.getListCoin()
@@ -37,6 +71,7 @@ class CoinsViewModel(
                 }
                 .onError { error ->
                     _state.update { it.copy(isLoading = false) }
+                    _event.send(CoinListEvent.Error(error))
                 }
         }
     }

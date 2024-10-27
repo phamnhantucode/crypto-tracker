@@ -42,7 +42,7 @@ fun PriceChangeTag(
     ) {
         Icon(imageVector = icon, contentDescription = change.format, tint = contentColor)
         Text(
-            text = change.format,
+            text = "${change.format} %",
             color = contentColor,
             style = MaterialTheme.typography.bodySmall,
         )
