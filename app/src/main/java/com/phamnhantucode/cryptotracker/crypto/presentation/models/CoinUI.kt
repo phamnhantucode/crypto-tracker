@@ -3,6 +3,7 @@ package com.phamnhantucode.cryptotracker.crypto.presentation.models
 import androidx.annotation.DrawableRes
 import com.phamnhantucode.cryptotracker.crypto.domain.Coin
 import com.phamnhantucode.cryptotracker.core.presentation.util.getDrawableIdForCoin
+import com.phamnhantucode.cryptotracker.crypto.presentation.coin_detail.DataPoint
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -15,6 +16,7 @@ data class CoinUI(
     val priceUsd: DisplayableNumber,
     val changePercent24Hr: DisplayableNumber,
     @DrawableRes val iconRes: Int,
+    val coinHistory: List<DataPoint> = emptyList()
 ) {
     companion object {
         fun mock(index: Int): CoinUI {

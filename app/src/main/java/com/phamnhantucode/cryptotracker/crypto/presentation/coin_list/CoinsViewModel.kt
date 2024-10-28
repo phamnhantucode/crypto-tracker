@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.phamnhantucode.cryptotracker.core.domain.util.onError
 import com.phamnhantucode.cryptotracker.core.domain.util.onSuccess
 import com.phamnhantucode.cryptotracker.crypto.domain.CoinDataSource
+import com.phamnhantucode.cryptotracker.crypto.presentation.coin_detail.DataPoint
 import com.phamnhantucode.cryptotracker.crypto.presentation.models.CoinUI
 import com.phamnhantucode.cryptotracker.crypto.presentation.models.toCoinUI
 import kotlinx.coroutines.channels.Channel
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class CoinsViewModel(
     private val dataSource: CoinDataSource
@@ -53,8 +55,24 @@ class CoinsViewModel(
                 coinId = coin.id,
                 start = ZonedDateTime.now().minusDays(7),
                 end = ZonedDateTime.now(),
-            ).onSuccess {
-                print(it)
+            ).onSuccess { coinPrices ->
+                _state.update {
+                    it.copy(
+                        selectedCoin = coin.copy(
+                            coinHistory = coinPrices
+                                .sortedBy { it.time }
+                                .map {
+                                    DataPoint(
+                                        x = it.time.toEpochSecond().toFloat(),
+                                        y = it.priceUsd,
+                                        xLabel = DateTimeFormatter
+                                            .ofPattern("ha\nM/d")
+                                            .format(it.time)
+                                    )
+                                }
+                        )
+                    )
+                }
             }.onError { error ->
                 _event.send(CoinListEvent.Error(error))
             }

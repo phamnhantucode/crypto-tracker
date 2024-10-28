@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CoinPriceDto(
-    val priceUsd: Double,
+    val priceUsd: Float,
     val time: Long
 )

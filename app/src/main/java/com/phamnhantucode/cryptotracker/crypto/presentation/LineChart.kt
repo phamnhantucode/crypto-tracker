@@ -55,6 +55,7 @@ fun LineChart(
     selectedDataPoint: DataPoint? = null,
     onSelectedDataPointChanged: (DataPoint?) -> Unit = {},
     onXLabelWidthChanged: (Float) -> Unit = {},
+    onYLabelWidthChanged: (Float)-> Unit = {},
     showHelperLines: Boolean = true,
 ) {
     val textStyle = LocalTextStyle.current.copy(
@@ -81,6 +82,12 @@ fun LineChart(
     }
     LaunchedEffect(key1 = xLabelWidth) {
         onXLabelWidthChanged(xLabelWidth)
+    }
+    var yLabelWidth by remember {
+        mutableFloatStateOf(0f)
+    }
+    LaunchedEffect(key1 = yLabelWidth) {
+        onYLabelWidthChanged(yLabelWidth)
     }
 
     val selectedDataPointIndex = remember(selectedDataPoint) {
@@ -127,7 +134,9 @@ fun LineChart(
         val maxXLabelWidth = xLabelTextLayoutResults.maxOfOrNull { it.size.width } ?: 0
         val maxXLabelHeight = xLabelTextLayoutResults.maxOfOrNull { it.size.height } ?: 0
         val maxXLabelLineCount = xLabelTextLayoutResults.maxOfOrNull { it.lineCount } ?: 0
-        val xLabelLineHeight = maxXLabelHeight / maxXLabelLineCount
+        val xLabelLineHeight = if (maxXLabelLineCount > 0) {
+            maxXLabelHeight / maxXLabelLineCount
+        } else 0
 
         val viewPortHeightPx =
             size.height - (maxXLabelHeight + 2 * verticalPaddingPx + xLabelLineHeight + xAxisLabelSpacingPx)
@@ -152,7 +161,7 @@ fun LineChart(
             )
         }
         val maxYLabelWidth = yLabelTextLayoutResult.maxOfOrNull { it.size.width } ?: 0
-
+        yLabelWidth = horizontalPaddingPx + maxYLabelWidth
         val viewPortTopY = verticalPaddingPx + xLabelLineHeight + 10f
         val viewPortRightX = size.width
         val viewPortBottomY = viewPortTopY + viewPortHeightPx
@@ -225,8 +234,9 @@ fun LineChart(
         val remainingHeightForLabels = labelViewPortHeightPx - heightRequiredForLabels
         val spaceBetweenLabels = remainingHeightForLabels / labelCountExcludingLastLabel
 
+
         yLabelTextLayoutResult.forEachIndexed { index, textLayoutResult ->
-            val x = horizontalPaddingPx + maxYLabelWidth - textLayoutResult.size.width.toFloat()
+            val x = yLabelWidth - textLayoutResult.size.width.toFloat()
             val y = viewPortTopY +
                     index * (xLabelLineHeight + spaceBetweenLabels) -
                     xLabelLineHeight / 2
@@ -363,7 +373,7 @@ private fun LineChartPreview() {
         val coinHistoryRandomized = remember {
             (1..20).map {
                 CoinPrice(
-                    priceUsd = Random.nextFloat() * 1000.0,
+                    priceUsd = Random.nextFloat() * 1000.0f,
                     time = ZonedDateTime.now().plusHours(it.toLong())
                 )
             }
